@@ -1,103 +1,162 @@
-import Image from "next/image";
+"use client"
+import { useState } from 'react';
+import * as XLSX from 'xlsx';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+
+function getWeekNumber(date) {
+  const target = new Date(date.valueOf());
+  const dayNr = (date.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedOption, setSelectedOption] = useState("turkiye");
+  const [downloadUrl, setDownloadUrl] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+  const getWeekMonday = (cw) => {
+    try {
+      if (!cw.startsWith("CW")) return cw;
+      const [_, part] = cw.split(" ");
+      const [week, year] = part.split("/").map(Number);
+      const monday = new Date(year, 0, 1 + (week - 1) * 7);
+      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1);
+      return monday.toLocaleDateString("tr-TR");
+    } catch {
+      return cw;
+    }
+  };
+
+  const getPreviousFriday = (cw) => {
+    try {
+      if (!cw.startsWith("CW")) return cw;
+      const [_, part] = cw.split(" ");
+      const [week, year] = part.split("/").map(Number);
+      const monday = new Date(year, 0, 1 + (week - 1) * 7);
+      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1);
+      const prevMonday = new Date(monday);
+      prevMonday.setDate(prevMonday.getDate() - 14);
+      const friday = new Date(prevMonday);
+      friday.setDate(friday.getDate() + 4);
+      return friday.toLocaleDateString("tr-TR");
+    } catch {
+      return cw;
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setProcessing(true);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(sheet);
+
+      if (!json[0]?.Delivery_Date) {
+        alert("'Delivery_Date' sütunu bulunamadı.");
+        setProcessing(false);
+        return;
+      }
+
+      const processed = json.map(row => ({
+        ...row,
+        Modified_Delivery_Date: selectedOption === "turkiye"
+          ? getWeekMonday(row.Delivery_Date)
+          : getPreviousFriday(row.Delivery_Date)
+      }));
+
+      const newSheet = XLSX.utils.json_to_sheet(processed);
+      const newWorkbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1");
+      const blob = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
+      setProcessing(false);
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const generateWeeklyCalendar = () => {
+    const currentYear = new Date().getFullYear();
+    const weeks = [];
+    for (let week = 1; week <= 52; week++) {
+      const monday = new Date(currentYear, 0, 1 + (week - 1) * 7);
+      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1);
+      weeks.push({
+        weekNumber: week,
+        date: monday.toLocaleDateString("tr-TR")
+      });
+    }
+    return weeks;
+  };
+
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
+      <Card className="w-full max-w-xl">
+        <CardContent className="p-6 space-y-4">
+          <h1 className="text-2xl font-bold">Delivery Date Processor</h1>
+          <p className="text-gray-600">Excel dosyanızı yükleyin ve işlem modunu seçin.</p>
+
+          <RadioGroup value={selectedOption} onValueChange={setSelectedOption} className="flex space-x-6">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="turkiye" id="turkiye" />
+              <Label htmlFor="turkiye">Türkiye (Hafta Başı)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="other" id="other" />
+              <Label htmlFor="other">Diğer (2 Hafta Önceki Cuma)</Label>
+            </div>
+          </RadioGroup>
+
+          <input
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleFileUpload}
+            className="w-full border p-2 rounded"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+          {processing && <p className="text-blue-500">Dosya işleniyor...</p>}
+
+          {downloadUrl && (
+            <a
+              href={downloadUrl}
+              download="modified_file.xlsx"
+              className="block text-center text-white bg-green-600 hover:bg-green-700 px-4 py-2 rounded"
+            >
+              📥 Dosyayı İndir
+            </a>
+          )}
+
+          <Button onClick={() => setShowCalendar(!showCalendar)}>
+            {showCalendar ? "Takvimi Gizle" : "Haftalık Takvimi Göster"}
+          </Button>
+
+          {showCalendar && (
+            <div className="mt-4 max-h-[300px] overflow-y-auto border p-4 rounded bg-gray-100">
+              <ul className="space-y-1">
+                {generateWeeklyCalendar().map(({ weekNumber, date }) => (
+                  <li key={weekNumber} className="text-sm">
+                    <strong>CW {weekNumber}</strong>: {date}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </main>
   );
 }
