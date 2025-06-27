@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import { YearViewCalendar } from "@/components/YearlyCalendar";
 
 export default function CalendarPage() {
@@ -8,3 +9,6 @@ export default function CalendarPage() {
     </main>
   )
 }
+
+
+
