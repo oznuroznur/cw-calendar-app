@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react"
 import * as XLSX from "xlsx"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { ArrowRightFromLine, Download } from "lucide-react"
 
 export function FileProcessorTool() {
   const [selectedOption, setSelectedOption] = useState<"turkiye" | "other">("turkiye")
@@ -14,43 +14,46 @@ export function FileProcessorTool() {
   const [showWeeks, setShowWeeks] = useState(false)
   const [weeks, setWeeks] = useState<{ weekNumber: number, date: string }[]>([])
 
-  const getWeekMonday = (cw: string) => {
-    try {
-      if (!cw.startsWith("CW")) return cw
-      const [_, part] = cw.split(" ")
-      const [week, year] = part.split("/").map(Number)
-      const monday = new Date(year, 0, 1 + (week - 1) * 7)
-      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1)
-      return monday.toLocaleDateString("tr-TR")
-    } catch {
-      return cw
-    }
+
+
+  const calculateTurkeyDate = (cw: string) => {
+  try {
+    if (!cw.startsWith("CW")) return cw
+    const [_, part] = cw.split(" ")
+    const [week, year] = part.split("/").map(Number)
+    const monday = new Date(year, 0, 1 + (week - 1) * 7)
+    while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1)
+    return monday.toLocaleDateString("tr-TR")
+  } catch {
+    return cw
   }
+}
 
-  const getPreviousFriday = (cw: string) => {
-    try {
-      if (!cw.startsWith("CW")) return cw
-      const [_, part] = cw.split(" ")
-      const [week, year] = part.split("/").map(Number)
-      const monday = new Date(year, 0, 1 + (week - 1) * 7)
-      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1)
-      const prevMonday = new Date(monday)
-      prevMonday.setDate(prevMonday.getDate() - 14)
-      const friday = new Date(prevMonday)
-      friday.setDate(friday.getDate() + 4)
-      return friday.toLocaleDateString("tr-TR")
-    } catch {
-      return cw
-    }
+const calculateOtherDate = (cw: string) => {
+  try {
+    if (!cw.startsWith("CW")) return cw
+    const [_, part] = cw.split(" ")
+    const [week, year] = part.split("/").map(Number)
+    const monday = new Date(year, 0, 1 + (week - 1) * 7)
+    while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1)
+    const prevMonday = new Date(monday)
+    prevMonday.setDate(prevMonday.getDate() - 14)
+    const friday = new Date(prevMonday)
+    friday.setDate(friday.getDate() + 4)
+    return friday.toLocaleDateString("tr-TR")
+  } catch {
+    return cw
   }
+}
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setProcessing(true)
+ const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  setProcessing(true)
 
-    const reader = new FileReader()
-    reader.onload = (evt) => {
+  const reader = new FileReader()
+  reader.onload = (evt) => {
+    try {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer)
       const workbook = XLSX.read(data, { type: "array" })
       const sheet = workbook.Sheets[workbook.SheetNames[0]]
@@ -66,35 +69,31 @@ export function FileProcessorTool() {
         ...row,
         Modified_Delivery_Date:
           selectedOption === "turkiye"
-            ? getWeekMonday(row.Delivery_Date)
-            : getPreviousFriday(row.Delivery_Date),
+            ? calculateTurkeyDate(row.Delivery_Date)
+            : calculateOtherDate(row.Delivery_Date),
       }))
 
       const newSheet = XLSX.utils.json_to_sheet(processed)
       const newWorkbook = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(newWorkbook, newSheet, "Sheet1")
-      const blob = XLSX.write(newWorkbook, { bookType: "xlsx", type: "blob" })
+
+      // ✅ Correct Blob creation
+      const wbout = XLSX.write(newWorkbook, { bookType: "xlsx", type: "array" })
+      const blob = new Blob([wbout], { type: "application/octet-stream" })
       const url = URL.createObjectURL(blob)
+
       setDownloadUrl(url)
+    } catch (err) {
+      console.error("Dosya işlenirken bir hata oluştu:", err)
+      alert("Dosya işlenirken bir hata oluştu.")
+    } finally {
       setProcessing(false)
     }
-
-    reader.readAsArrayBuffer(file)
   }
 
-  const generateWeeks = () => {
-    const currentYear = new Date().getFullYear()
-    const weeks = []
-    for (let week = 1; week <= 52; week++) {
-      const monday = new Date(currentYear, 0, 1 + (week - 1) * 7)
-      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1)
-      weeks.push({
-        weekNumber: week,
-        date: monday.toLocaleDateString("tr-TR"),
-      })
-    }
-    return weeks
-  }
+  reader.readAsArrayBuffer(file)
+}
+
 
    useEffect(() => {
     const currentYear = new Date().getFullYear()
@@ -125,7 +124,7 @@ export function FileProcessorTool() {
   return (
     <div className="space-y-4">
         
-      <h2 className="text-lg font-semibold">Teslimat Dosya İşleyici</h2>
+      <h2 className="text-lg font-semibold flex flex-row justify-start items-center gap-x-2">Teslimat Dosya İşleyici <ArrowRightFromLine/> <span className="text-violet-500">{selectedOption == "turkiye" ? "Türkiye (Hafta Başı)" : "Diğer (2 Hafta Önceki Cuma)"} </span></h2>
 
        <RadioGroup value={selectedOption} onValueChange={(val) => setSelectedOption(val as "turkiye" | "other")} className="flex space-x-4">
         <div className="flex items-center space-x-2">
@@ -145,15 +144,15 @@ export function FileProcessorTool() {
         className="w-full border rounded p-2"
       />
 
-      {processing && <p className="text-blue-500 animate-pulse">Dosya işleniyor...</p>}
+      {processing && <p className="text-violet-500 animate-pulse">Dosya işleniyor...</p>}
 
       {downloadUrl && (
         <a
           href={downloadUrl}
           download="modified_file.xlsx"
-          className="block text-center bg-green-600 text-white rounded p-2 hover:bg-green-700"
+          className="block text-center bg-violet-500 text-white rounded p-2 hover:bg-green-700 flex flex-row items-center justify-center gap-x-2  "
         >
-          📥 Dosyayı İndir
+          <Download/> Dosyayı İndir
         </a>
       )}
 
@@ -162,7 +161,7 @@ export function FileProcessorTool() {
       </Button>
 
       {showWeeks && (
-        <div className="max-h-[200px] overflow-y-auto border rounded p-2 bg-gray-100">
+        <div className="max-h-[400px] overflow-y-auto border rounded p-2 bg-gray-100">
           <ul className="space-y-1 text-sm">
             {weeks.map(({ weekNumber, date }) => (
               <li key={weekNumber}>
