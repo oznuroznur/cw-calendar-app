@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import * as XLSX from "xlsx"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -8,10 +8,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 
 export function FileProcessorTool() {
-  const [selectedOption, setSelectedOption] = useState("turkiye")
+  const [selectedOption, setSelectedOption] = useState<"turkiye" | "other">("turkiye")
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [showWeeks, setShowWeeks] = useState(false)
+  const [weeks, setWeeks] = useState<{ weekNumber: number, date: string }[]>([])
 
   const getWeekMonday = (cw: string) => {
     try {
@@ -95,11 +96,38 @@ export function FileProcessorTool() {
     return weeks
   }
 
+   useEffect(() => {
+    const currentYear = new Date().getFullYear()
+    const generatedWeeks = []
+    for (let week = 1; week <= 52; week++) {
+      const monday = new Date(currentYear, 0, 1 + (week - 1) * 7)
+      while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1)
+
+      if (selectedOption === "turkiye") {
+        generatedWeeks.push({
+          weekNumber: week,
+          date: monday.toLocaleDateString("tr-TR")
+        })
+      } else {
+        const prevMonday = new Date(monday)
+        prevMonday.setDate(prevMonday.getDate() - 14)
+        const friday = new Date(prevMonday)
+        friday.setDate(friday.getDate() + 4)
+        generatedWeeks.push({
+          weekNumber: week,
+          date: friday.toLocaleDateString("tr-TR")
+        })
+      }
+    }
+    setWeeks(generatedWeeks)
+  }, [selectedOption])
+
   return (
     <div className="space-y-4">
+        
       <h2 className="text-lg font-semibold">Teslimat Dosya İşleyici</h2>
 
-      <RadioGroup value={selectedOption} onValueChange={setSelectedOption} className="flex space-x-4">
+       <RadioGroup value={selectedOption} onValueChange={(val) => setSelectedOption(val as "turkiye" | "other")} className="flex space-x-4">
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="turkiye" id="turkiye" />
           <Label htmlFor="turkiye">Türkiye (Hafta Başı)</Label>
@@ -136,7 +164,7 @@ export function FileProcessorTool() {
       {showWeeks && (
         <div className="max-h-[200px] overflow-y-auto border rounded p-2 bg-gray-100">
           <ul className="space-y-1 text-sm">
-            {generateWeeks().map(({ weekNumber, date }) => (
+            {weeks.map(({ weekNumber, date }) => (
               <li key={weekNumber}>
                 <strong>CW {weekNumber}</strong>: {date}
               </li>
