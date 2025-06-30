@@ -167,7 +167,7 @@ export function FileProcessorTool() {
         <a
           href={downloadUrl}
           download="modified_file.xlsx"
-          className="block text-center bg-violet-500 text-white rounded p-2 hover:bg-green-700 flex flex-row items-center justify-center gap-x-2  "
+          className="block text-center bg-violet-500 text-white rounded p-2 hover:bg-violet-700 flex flex-row items-center justify-center gap-x-2  "
         >
           <Download /> Dosyayı İndir
         </a>
