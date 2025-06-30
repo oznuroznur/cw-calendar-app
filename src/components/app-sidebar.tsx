@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { Calendar, FolderUp, Settings } from "lucide-react"
+import { Calendar, FolderUp } from "lucide-react"
 
 export function AppSidebar() {
   return (
