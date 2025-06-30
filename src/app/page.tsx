@@ -1,3 +1,32 @@
+import { FileProcessorTool } from "@/components/FileProcessorTool"
+import { Card, CardContent } from "@/components/ui/card"
+import { YearViewCalendar } from "@/components/YearlyCalendar"
+
+export default function CalendarProcessorPanel() {
+  return (
+    <main className="min-h-screen bg-gray-50 p-6">
+      <h1 className="text-2xl font-bold text-center mb-6">
+        📅 Yıllık CW Takvimi ve Teslimat Paneli
+      </h1>
+      <div className="grid grid-cols-1 lg:flex lg:flex-col gap-6">
+        <Card className="shadow-lg rounded-2xl p-4">
+          <CardContent>
+            <YearViewCalendar year={2025} />
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg rounded-2xl p-4">
+          <CardContent>
+            <FileProcessorTool />
+          </CardContent>
+        </Card>
+      </div>
+    </main>
+  )
+}
+
+
+
 // "use client"
 // import { useState } from 'react';
 // import * as XLSX from 'xlsx';
@@ -165,30 +194,4 @@
 // }
 
 
-import { FileProcessorTool } from "@/components/FileProcessorTool"
-import { Card, CardContent } from "@/components/ui/card"
-import { YearViewCalendar } from "@/components/YearlyCalendar"
-
-export default function CalendarProcessorPanel() {
-  return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        📅 Yıllık CW Takvimi ve Teslimat Paneli
-      </h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-lg rounded-2xl p-4">
-          <CardContent>
-            <YearViewCalendar year={2025} />
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg rounded-2xl p-4">
-          <CardContent>
-            <FileProcessorTool />
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  )
-}
 

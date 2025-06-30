@@ -23,7 +23,7 @@ interface Product {
 
 interface MonthCalendarProps {
   year: number
-  month: number // 0 = Ocak
+  month: number 
   events: { [cw: number]: Product[] }
 }
 
@@ -54,7 +54,7 @@ export function MonthCalendar({ year, month, events }: MonthCalendarProps) {
           <div key={i} className="grid grid-cols-7 gap-1 mb-1">
             {days.map((day, j) => {
               const isCurrentMonth = day.getMonth() === month
-              const hasEvent = weekEvents.length > 0 && j === 0 // Pzt = ilk gün
+              const hasEvent = weekEvents.length > 0 && j === 0 
               return (
                 <div
                   key={j}
