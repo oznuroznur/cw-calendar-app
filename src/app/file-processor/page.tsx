@@ -1,14 +1,20 @@
-import { FileProcessorTool } from '@/components/FileProcessorTool'
+
+import { FileProcessorTool } from '@/components/FileProcessorV0'
 import React from 'react'
 
 function page() {
   return (
-    <div>
-      <FileProcessorTool />
-      {/* <YearViewCalendar year={2025} /> */}
-      {/* <CalendarProcessorPanel /> */}
-      {/* Uncomment the above lines if you want to include the calendar or processor panel */}
-    </div>
+     <main className="p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            📄 File Processor
+          </h1>
+          <p className="text-muted-foreground">Dosya işleme ve veri analiz araçları</p>
+        </div>
+        <FileProcessorTool />
+      </div>
+    </main>
   )
 }
 

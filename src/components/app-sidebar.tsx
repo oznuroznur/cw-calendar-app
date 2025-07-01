@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { Calendar, FolderUp } from "lucide-react"
+import { Calendar, FolderUp, Heart } from "lucide-react"
 
 export function AppSidebar() {
   return (
@@ -46,7 +46,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="mt-auto text-sm text-gray-400 px-2">© 2025</SidebarFooter>
+      <SidebarFooter className="mt-auto text-sm text-gray-400 px-2 flex flex-row items-center"><Heart/><Heart/><Heart/>Canım Annişim seni çok seviyorum, umarım işin kolaylaşır <Heart/><Heart/><Heart/></SidebarFooter>
     </Sidebar>
   )
 }

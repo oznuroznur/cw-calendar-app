@@ -1,25 +1,43 @@
-import { FileProcessorTool } from "@/components/FileProcessorTool"
-import { Card, CardContent } from "@/components/ui/card"
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { YearViewCalendar } from "@/components/YearlyCalendar"
+// import { Badge } from "@/components/ui/badge"
+import { FileProcessorTool } from "@/components/FileProcessorV0"
 
 export default function CalendarProcessorPanel() {
   return (
-    <main className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        📅 Yıllık CW Takvimi ve Teslimat Paneli
-      </h1>
-      <div className="grid grid-cols-1 lg:flex lg:flex-col gap-6">
-        <Card className="shadow-lg rounded-2xl p-4">
-          <CardContent>
-            <YearViewCalendar year={2025} />
-          </CardContent>
-        </Card>
+    <main className="p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* <div className="text-center">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            📅 CW Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground mb-4">Yıllık CW Takvimi ve Teslimat Paneli</p>
+          <div className="flex justify-center gap-2">
+            <Badge variant="secondary">Takvim</Badge>
+          </div>
+        </div> */}
 
-        <Card className="shadow-lg rounded-2xl p-4">
-          <CardContent>
-            <FileProcessorTool />
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1  gap-6">
+          <div className="xl:col-span-2">
+           
+               <YearViewCalendar year={2025} />
+          </div>
+
+          <div className="space-y-6">
+            <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-xl">📄</span>
+                  Dosya İşleme Araçları
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <FileProcessorTool />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </main>
   )
